@@ -19,6 +19,9 @@
     .PARAMETER Indent
     Data that you want to indent by 4 spaces. Can help readability in some situations.
 
+    .PARAMETER DoubleIndent
+    Data that you want to indent by 8 spaces. Can help readability when used with -indent in furthe subroutines.
+
     .PARAMETER IsError
     Marks the entry as [Error]
 
@@ -60,12 +63,44 @@
         2021-05-03 14:08:00   INFO          Processor: Core i5-11600K
         2021-05-03 14:08:01   INFO          Memory: 16 GB
 
+    .EXAMPLE
+    add-LogEntry -Output 'Checking if all required Windows Features are installed:'
+    foreach($RequiredWindowsFeature in $RequiredWindowsFeatures)
+    {
+        add-LogEntry -Output $RequiredWindowsFeature -Indent
+        If (-not(Get-WindowsFeature -Name $RequiredWindowsFeature).Installed)
+        {
+            add-LogEntry -Output 'Feature is missing, will attempt to install now.' -DoubleIndent
+            try
+            {
+                $null = Add-WindowsFeature -Name $RequiredWindowsFeature -ErrorAction Stop
+                add-LogEntry -Output 'Success' -IsSuccess -DoubleIndent
+            }
+            catch
+            {
+                add-LogEntry -Output "Failed to install '$RequiredWindowsFeature'" -DoubleIndent -IsError
+            }
+        }
+    }
+
+    Host:
+        Checking if all required Windows Features are installed:
+        RSAT-ADDS-Tools
+        Feature is missing, will attempt to install now.
+        Success
+
+    Logfile:
+        2021-06-08 15:45:56   INFO       Checking if all required Windows Features are installed:
+        2021-06-08 15:45:57   INFO           RSAT-ADDS-Tools
+        2021-06-08 15:45:57   INFO               Feature is missing, will attempt to install now.
+        2021-06-08 15:46:39   [SUCCESS]          Success
+
     .NOTES
         Filename: add-LogEntry.ps1
         Contributors: Kieran Walsh
         Created: 2018-01-12
-        Last Updated: 2021-05-03
-        Version: 0.05.0
+        Last Updated: 2021-06-08
+        Version: 0.06.0
     #>
     [CmdletBinding()]
     Param
@@ -74,15 +109,21 @@
         [Alias('Message')]
         [string]$Output,
         [string]$LogFile = 'C:\Windows\Temp\file.log',
+        [switch]$DoubleIndent,
         [switch]$Indent,
         [switch]$IsError,
         [switch]$IsSuccess,
         [switch]$IsWarning
     )
-    if($Indent)
+    if($DoubleIndent)
+    {
+        $Space = 9
+    }
+    Elseif($Indent)
     {
         $Space = 5
-    } Else
+    }
+    Else
     {
         $Space = 1
     }
