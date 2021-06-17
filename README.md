@@ -8,12 +8,17 @@ Similar to `Tee-Object`, this function will output data to the screen and a log 
 
 ![Image of add-LogEntry sample](https://github.com/kieranwalsh/img/blob/main/add-logentry.png)
 
+[get-ADLockouts](https://github.com/kieranwalsh/PowerShell-Functions/blob/main/get-ADLockouts.ps1)
+
+Lists all AD accounts that have been locked out and which machines the lockout happened from.
+
+![Gif of get-ADLockouts in action](https://github.com/kieranwalsh/img/blob/main/get-ADLockouts.gif)
+
 [get-FormattedDate](https://github.com/kieranwalsh/PowerShell-Functions/blob/main/get-FormattedDate.ps1)
 
 Get-FormattedDate takes any date and returns a readable date in ordinal format. For example, "Jan 16 1992" returns "Thursday, January 16th, 1992".
 
 ![Gif of get-FormattedDate in action](https://github.com/kieranwalsh/img/blob/main/get-FormattedDate.gif)
-
 
 [remove-Diacritics](https://github.com/kieranwalsh/PowerShell-Functions/blob/main/remove-Diacritics.ps1)
 
