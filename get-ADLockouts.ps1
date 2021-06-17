@@ -12,24 +12,32 @@
     .PARAMETER Days
     The number of days you wish to query. By default, the Security log overwrites itself very quickly, so there may not be many days to query.
 
+    .Parameter Sort
+    How you wish to sort the output. It is sorted by 'User' by default. You can only chose from 'User', 'Computer', or 'Lockout Time'. Use tab complete to pick the one you wish.
+
     .EXAMPLE
     get-ADLockouts
 
     .EXAMPLE
     get-ADLockouts -Days 3
 
+    .EXAMPLE
+    get-ADLockouts -Sort 'Lockout Time'
+
     .NOTES
     Filename: Get-ADLockouts.ps1
     Contributors: Kieran Walsh
     Created: 2021-06-16
-    Last Updated: 2021-06-16
-    Version: 0.01.02
+    Last Updated: 2021-06-17
+    Version: 0.02.00
 #>
 
     [CmdletBinding()]
     Param(
         [Parameter()]
-        [int]$Days = 1
+        [int]$Days = 1,
+        [ValidateSet('User', 'Computer', 'Lockout Time')]
+        [string]$Sort = 'User'
     )
 
     If (-not([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator'))
@@ -50,7 +58,7 @@
     }
 
     "Querying the PDC emulator, '$PDCEmulator' for lockout events in the last $($Days) days."
-
+    ' '
     try
     {
         $Events = Get-WinEvent -ComputerName $PDCEmulator -FilterHashtable @{
@@ -83,16 +91,39 @@
         $Device = ($EventXML.Event.EventData.Data | Where-Object -FilterScript {
                 $_.name -eq 'TargetDomainName'
             }).'#text'
+        try
+        {
+            $ADAccount = Get-ADUser -Server $PDCEmulator -Identity $UserName -Properties 'PasswordLastSet', 'whenCreated' -ErrorAction Stop
+            $AccountCreated = Get-Date($ADAccount.whenCreated) -Format 'yyyy-MM-dd'
+            $LastPasswordReset = Get-Date($ADAccount.PasswordLastSet) -Format 'yyyy-MM-dd HH:mm'
+        }
+        catch
+        {
+            $AccountCreated = 'Unknown'
+            $LastPasswordReset = 'Unknown'
+        }
         [PSCustomObject]@{
-            'User'         = $UserName
-            'Computer'     = $Device -replace '\\\\', ''
-            'Lockout Time' = Get-Date(($Event).TimeCreated) -Format 'yyyy-MM-dd HH:mm'
+            'User'             = $UserName
+            'Computer'         = $Device -replace '\\\\', ''
+            'Lockout Time'     = Get-Date(($Event).TimeCreated) -Format 'yyyy-MM-dd HH:mm'
+            'User Created'     = $AccountCreated
+            'Password Changed' = $LastPasswordReset
         }
     }
 
+    $Lockouts = $Lockouts | Sort-Object $Sort
     "There were $(($Lockouts | Measure-Object).count) lockouts since $(Get-Date(Get-Date).AddDays(-$Days) -Format 'yyyy-MM-dd HH:mm'):"
+    ' '
+    $MaxWidthUser = (($Lockouts.User |
+            Sort-Object -Property Length -Descending |
+            Select-Object -First 1).length + 3)
 
-    $Lockouts | Sort-Object User, Time
+    $MaxWidthComputer = (($Lockouts.Computer |
+            Sort-Object -Property Length -Descending |
+            Select-Object -First 1).length + 3)
+    "{0,-$MaxWidthUser}{1,-$MaxWidthComputer}{2,-20}{3,-16}{4}" -f 'User', 'Computer', 'Lockout Time', 'User Created', 'Password Changed'
+    $Lockouts | ForEach-Object {
+        "{0,-$MaxWidthUser}{1,-$MaxWidthComputer}{2,-20}{3,-16}{4}" -f $_.User, $_.Computer, $_.'Lockout Time', $_.'User Created', $_.'Password Changed'
+    }
 }
-
 get-ADLockouts
