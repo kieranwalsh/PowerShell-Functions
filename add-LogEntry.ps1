@@ -8,6 +8,7 @@
     Add-LogEntry sends output to the host and a log file.
     Output sent to the log file includes time entries. Those are not generally needed on the host and may take up too much room.
     You can pass on directions to indent output or indicate that it was a Success, Warning, or Failure. Everything else is marked as Info.
+    Info data is sent to the screen in the default white font, but everything else uses appropriate colours
 
     .PARAMETER Logfile
     The full path to where you want to save the log. There's no need to specify this every time if you enter this in your main script:
@@ -119,6 +120,7 @@
         [switch]$IsSuccess,
         [switch]$IsWarning
     )
+    $ForegroundColor = 'White'
     if($DoubleIndent)
     {
         $Space = 9
@@ -135,15 +137,18 @@
     if($IsError)
     {
         $Type = '[ERROR]'
+        $ForegroundColor = 'Red'
     }if($IsSuccess)
     {
         $Type = '[SUCCESS]'
+        $ForegroundColor = 'Green'
     }
     if($IsWarning)
     {
         $Type = '[WARNING]'
+        $ForegroundColor = 'Yellow'
     }
-    $Output
+    Write-Host -Object $Output -ForegroundColor $ForegroundColor
     if($ClearLog)
     {
         "{0,-22}{1,-10}{2,-$Space}{3}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Type, ' ', $Output | Out-File -FilePath $LogFile -Encoding 'utf8'
