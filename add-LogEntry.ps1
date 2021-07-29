@@ -16,6 +16,9 @@
     .PARAMETER Output
     The data you wish to send to the host and logfile.
 
+    .PARAMETER ClearLog
+    Overwrites the current logfile with this entry only. Generally would be used at the start of the script.
+
     .PARAMETER Indent
     Data that you want to indent by 4 spaces. Can help readability in some situations.
 
@@ -99,8 +102,8 @@
         Filename: add-LogEntry.ps1
         Contributors: Kieran Walsh
         Created: 2018-01-12
-        Last Updated: 2021-06-08
-        Version: 0.06.0
+        Last Updated: 2021-07-29
+        Version: 0.07.0
     #>
     [CmdletBinding()]
     Param
@@ -108,8 +111,9 @@
         [Parameter(Mandatory = $true)]
         [Alias('Message')]
         [string]$Output,
-        [string]$LogFile = 'C:\Windows\Temp\file.log',
+        [switch]$ClearLog,
         [switch]$DoubleIndent,
+        [string]$LogFile = 'C:\Windows\Temp\file.log',
         [switch]$Indent,
         [switch]$IsError,
         [switch]$IsSuccess,
@@ -140,5 +144,12 @@
         $Type = '[WARNING]'
     }
     $Output
-    "{0,-22}{1,-10}{2,-$Space}{3}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Type, ' ', $Output | Out-File -FilePath $LogFile -Encoding 'utf8' -Append
+    if($ClearLog)
+    {
+        "{0,-22}{1,-10}{2,-$Space}{3}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Type, ' ', $Output | Out-File -FilePath $LogFile -Encoding 'utf8'
+    }
+    Else
+    {
+        "{0,-22}{1,-10}{2,-$Space}{3}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Type, ' ', $Output | Out-File -FilePath $LogFile -Encoding 'utf8' -Append
+    }
 }
