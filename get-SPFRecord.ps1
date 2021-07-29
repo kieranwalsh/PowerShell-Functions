@@ -14,7 +14,7 @@
     get-SPFRecord.ps1 -Domain 'microsoft.com'
 
     .NOTES
-         Filename: get-SPFRecord.ps1
+    Filename: get-SPFRecord.ps1
     Contributors: Kieran Walsh
     Created: 2021-07-12
     Last Updated: 2021-07-12
